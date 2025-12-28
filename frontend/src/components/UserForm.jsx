@@ -2,89 +2,111 @@
 import React, { useState, useEffect } from "react";
 import { addUser, updateUser } from "../services/api";
 
-const UserForm = ({ onUserAdded, editingUser, onEditComplete }) => {
+const UserForm = ({ editingUser, onEditComplete }) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [role, setRole] = useState("user");
+  const [role, setRole] = useState("User"); // default to User
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(null);
 
-  // Populate form if editing
   useEffect(() => {
     if (editingUser) {
-      setName(editingUser.name);
-      setEmail(editingUser.email);
-      setRole(editingUser.role || "user");
+      setName(editingUser.name || "");
+      setEmail(editingUser.email || "");
+      setRole(editingUser.role || "User");
+    } else {
+      setName("");
+      setEmail("");
+      setRole("User");
     }
   }, [editingUser]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
-
-    if (!name || !email || (!editingUser && !password)) {
-      setError("Please fill all required fields");
-      setLoading(false);
-      return;
-    }
+    setError(null);
 
     try {
       if (editingUser) {
-        // Update user
         await updateUser(editingUser.id, { name, email, role });
-        onEditComplete(); // signal update complete
       } else {
-        // Add new user
-        await addUser({ name, email, password, role });
-        onUserAdded();
+        await addUser({ name, email, role });
       }
-
-      // Reset form
-      setName("");
-      setEmail("");
-      setPassword("");
-      setRole("user");
+      onEditComplete();
     } catch (err) {
-      setError("Failed to submit user");
+      setError("Failed to save user");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h2>{editingUser ? "Update User" : "Add New User"}</h2>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      <input
-        type="text"
-        placeholder="Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      {!editingUser && (
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-      )}
-      <select value={role} onChange={(e) => setRole(e.target.value)}>
-        <option value="user">User</option>
-        <option value="admin">Admin</option>
-      </select>
-      <button type="submit" disabled={loading}>
-        {loading ? "Submitting..." : editingUser ? "Update User" : "Add User"}
-      </button>
-    </form>
+    <div className="flex flex-col gap-6">
+      <h2 className="text-2xl font-bold text-gray-800 text-center">
+        {editingUser ? "Edit User" : "Add New User"}
+      </h2>
+
+      {error && <p className="text-red-500 text-center">{error}</p>}
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        {/* Name */}
+        <div className="flex flex-col">
+          <label className="text-gray-700 font-medium mb-1">Name</label>
+          <input
+            type="text"
+            placeholder="Enter full name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="border border-gray-300 rounded-xl px-5 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+        </div>
+
+        {/* Email */}
+        <div className="flex flex-col">
+          <label className="text-gray-700 font-medium mb-1">Email</label>
+          <input
+            type="email"
+            placeholder="Enter email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="border border-gray-300 rounded-xl px-5 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+        </div>
+
+        {/* Role Dropdown */}
+        <div className="flex flex-col">
+          <label className="text-gray-700 font-medium mb-1">Role</label>
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className="border border-gray-300 rounded-xl px-5 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="User">User</option>
+            <option value="Admin">Admin</option>
+          </select>
+        </div>
+
+        {/* Buttons */}
+        <div className="flex justify-end gap-4 mt-4">
+          <button
+            type="button"
+            onClick={onEditComplete}
+            className="px-6 py-3 bg-gray-300 hover:bg-gray-400 rounded-xl font-medium transition-colors duration-200"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors duration-200"
+          >
+            {loading ? "Saving..." : "Save"}
+          </button>
+        </div>
+      </form>
+    </div>
   );
 };
 
