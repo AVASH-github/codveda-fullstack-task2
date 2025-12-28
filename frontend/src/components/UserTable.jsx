@@ -7,6 +7,7 @@ const UserTable = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
 
   // Fetch users on component mount
   useEffect(() => {
@@ -39,8 +40,17 @@ const UserTable = () => {
 
   return (
     <div>
-      <UserForm onUserAdded={fetchUsers} />
+      {/* User form for Add / Edit */}
+      <UserForm
+        onUserAdded={fetchUsers}
+        editingUser={editingUser}
+        onEditComplete={() => {
+          setEditingUser(null);
+          fetchUsers();
+        }}
+      />
 
+      {/* Users table */}
       <table border="1" cellPadding="10" style={{ marginTop: "20px", width: "100%" }}>
         <thead>
           <tr>
@@ -61,7 +71,7 @@ const UserTable = () => {
               <td>{user.role}</td>
               <td>{new Date(user.created_at).toLocaleString()}</td>
               <td>
-                <button onClick={() => alert("Update not implemented yet")}>Update</button>
+                <button onClick={() => setEditingUser(user)}>Edit</button>
                 <button onClick={() => handleDelete(user.id)}>Delete</button>
               </td>
             </tr>

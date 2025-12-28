@@ -39,3 +39,16 @@ router.delete("/:id", (req, res) => {
 });
 
 module.exports = router;
+// PUT update user
+router.put("/:id", (req, res) => {
+  const { name, email, role } = req.body;
+  const { id } = req.params;
+  db.query(
+    "UPDATE users_v2 SET name=?, email=?, role=? WHERE id=?",
+    [name, email, role, id],
+    (err) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ message: "User updated" });
+    }
+  );
+});

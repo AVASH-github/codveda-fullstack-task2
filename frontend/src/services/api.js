@@ -24,3 +24,13 @@ export const addUser = async (user) => {
   if (!res.ok) throw new Error("Failed to add user");
   return res.json();
 };
+// PUT update user
+export const updateUser = async (id, user) => {
+  const res = await fetch(`${API_URL}/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(user),
+  });
+  if (!res.ok) throw new Error("Failed to update user");
+  return res.json();
+};

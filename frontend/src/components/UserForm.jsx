@@ -1,7 +1,8 @@
-import React, { useState } from "react";
-import { addUser } from "../services/api";
+// src/components/UserForm.jsx
+import React, { useState, useEffect } from "react";
+import { addUser, updateUser } from "../services/api";
 
-const UserForm = ({ onUserAdded }) => {
+const UserForm = ({ onUserAdded, editingUser, onEditComplete }) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -9,26 +10,44 @@ const UserForm = ({ onUserAdded }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Populate form if editing
+  useEffect(() => {
+    if (editingUser) {
+      setName(editingUser.name);
+      setEmail(editingUser.email);
+      setRole(editingUser.role || "user");
+    }
+  }, [editingUser]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    if (!name || !email || !password) {
-      setError("Please fill all fields");
+    if (!name || !email || (!editingUser && !password)) {
+      setError("Please fill all required fields");
       setLoading(false);
       return;
     }
 
     try {
-      await addUser({ name, email, password, role });
+      if (editingUser) {
+        // Update user
+        await updateUser(editingUser.id, { name, email, role });
+        onEditComplete(); // signal update complete
+      } else {
+        // Add new user
+        await addUser({ name, email, password, role });
+        onUserAdded();
+      }
+
+      // Reset form
       setName("");
       setEmail("");
       setPassword("");
       setRole("user");
-      onUserAdded(); // refresh user table
     } catch (err) {
-      setError("Failed to add user");
+      setError("Failed to submit user");
     } finally {
       setLoading(false);
     }
@@ -36,7 +55,7 @@ const UserForm = ({ onUserAdded }) => {
 
   return (
     <form onSubmit={handleSubmit}>
-      <h2>Add New User</h2>
+      <h2>{editingUser ? "Update User" : "Add New User"}</h2>
       {error && <p style={{ color: "red" }}>{error}</p>}
       <input
         type="text"
@@ -50,18 +69,20 @@ const UserForm = ({ onUserAdded }) => {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+      {!editingUser && (
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+      )}
       <select value={role} onChange={(e) => setRole(e.target.value)}>
         <option value="user">User</option>
         <option value="admin">Admin</option>
       </select>
       <button type="submit" disabled={loading}>
-        {loading ? "Adding..." : "Add User"}
+        {loading ? "Submitting..." : editingUser ? "Update User" : "Add User"}
       </button>
     </form>
   );
