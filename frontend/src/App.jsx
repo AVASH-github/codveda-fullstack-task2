@@ -1,13 +1,20 @@
-// src/App.jsx
 import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import Login from "./components/Login";
 import UserTable from "./components/UserTable";
 
-function App() {
+const App = () => {
+  const token = localStorage.getItem("token");
+
   return (
-    <div className="App">
-      <UserTable />
-    </div>
+    <Routes>
+      <Route path="/" element={token ? <Navigate to="/dashboard" /> : <Login />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/dashboard" element={token ? <UserTable /> : <Navigate to="/login" />} />
+      <Route path="*" element={<Navigate to="/" />} />
+    </Routes>
   );
-}
+};
 
 export default App;
+

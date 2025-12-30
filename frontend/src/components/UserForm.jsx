@@ -5,109 +5,115 @@ import { addUser, updateUser } from "../services/api";
 const UserForm = ({ editingUser, onEditComplete }) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("User"); // default to User
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("user");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (editingUser) {
-      setName(editingUser.name || "");
-      setEmail(editingUser.email || "");
-      setRole(editingUser.role || "User");
+      setName(editingUser.name);
+      setEmail(editingUser.email);
+      setRole(editingUser.role);
     } else {
       setName("");
       setEmail("");
-      setRole("User");
+      setPassword("");
+      setRole("user");
     }
+    setError("");
   }, [editingUser]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+    setError("");
+
+    if (!name || !email || (!editingUser && !password)) {
+      setError("Please fill in all required fields.");
+      setLoading(false);
+      return;
+    }
 
     try {
       if (editingUser) {
         await updateUser(editingUser.id, { name, email, role });
       } else {
-        await addUser({ name, email, role });
+        await addUser({ name, email, password, role });
       }
       onEditComplete();
     } catch (err) {
-      setError("Failed to save user");
+      setError(err.message || "Failed to save user.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <h2 className="text-2xl font-bold text-gray-800 text-center">
+    <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
+      <h2 className="text-xl font-bold text-gray-800">
         {editingUser ? "Edit User" : "Add New User"}
       </h2>
 
-      {error && <p className="text-red-500 text-center">{error}</p>}
+      {error && <p className="text-red-500">{error}</p>}
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-        {/* Name */}
-        <div className="flex flex-col">
-          <label className="text-gray-700 font-medium mb-1">Name</label>
+      <label className="font-medium">Name</label>
+      <input
+        type="text"
+        className="border p-3 rounded w-full"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        required
+      />
+
+      <label className="font-medium">Email</label>
+      <input
+        type="email"
+        className="border p-3 rounded w-full"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+      />
+
+      {!editingUser && (
+        <>
+          <label className="font-medium">Password</label>
           <input
-            type="text"
-            placeholder="Enter full name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="border border-gray-300 rounded-xl px-5 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            type="password"
+            className="border p-3 rounded w-full"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             required
           />
-        </div>
+        </>
+      )}
 
-        {/* Email */}
-        <div className="flex flex-col">
-          <label className="text-gray-700 font-medium mb-1">Email</label>
-          <input
-            type="email"
-            placeholder="Enter email address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="border border-gray-300 rounded-xl px-5 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-        </div>
+      <label className="font-medium">Role</label>
+      <select
+        className="border p-3 rounded w-full"
+        value={role}
+        onChange={(e) => setRole(e.target.value)}
+      >
+        <option value="user">User</option>
+        <option value="admin">Admin</option>
+      </select>
 
-        {/* Role Dropdown */}
-        <div className="flex flex-col">
-          <label className="text-gray-700 font-medium mb-1">Role</label>
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="border border-gray-300 rounded-xl px-5 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="User">User</option>
-            <option value="Admin">Admin</option>
-          </select>
-        </div>
-
-        {/* Buttons */}
-        <div className="flex justify-end gap-4 mt-4">
-          <button
-            type="button"
-            onClick={onEditComplete}
-            className="px-6 py-3 bg-gray-300 hover:bg-gray-400 rounded-xl font-medium transition-colors duration-200"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors duration-200"
-          >
-            {loading ? "Saving..." : "Save"}
-          </button>
-        </div>
-      </form>
-    </div>
+      <button
+        type="submit"
+        disabled={loading}
+        className="bg-blue-600 hover:bg-blue-700 text-white py-3 rounded transition-colors duration-200"
+      >
+        {loading
+          ? editingUser
+            ? "Updating..."
+            : "Adding..."
+          : editingUser
+          ? "Update User"
+          : "Add User"}
+      </button>
+    </form>
   );
 };
 
 export default UserForm;
+
